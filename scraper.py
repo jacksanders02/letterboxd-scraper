@@ -51,10 +51,15 @@ def parse_letterboxd(url: str, exclude_list: List[str]) -> List[LetterboxdReview
         full_text = parse_paragraphs(BeautifulSoup(requests.get(text_url).text, 'html.parser'))
 
         # Used to check text for language/banned words etc.
-        check_text = ' '.join(full_text)
+        check_text = ' '.join(full_text).lower()
 
-        if langdetect.detect(check_text) != 'en' or any(banned_word in check_text.split(' ') for banned_word in exclude_list):
-            # Skip non-english/bad language reviews
+        try:
+            if (langdetect.detect(check_text) != 'en' or
+                    any(banned_word in check_text for banned_word in exclude_list)):
+                # Skip non-english/bad language reviews
+                continue
+        except langdetect.lang_detect_exception.LangDetectException:
+            # Handle reviews with no text
             continue
 
         title = review.find('a')
