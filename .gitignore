@@ -416,3 +416,4 @@ pyrightconfig.json
 # End of https://www.toptal.com/developers/gitignore/api/python,jetbrains,node,nextjs
 
 banned_words.txt
+*.ttf
