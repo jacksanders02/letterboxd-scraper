@@ -1,0 +1,50 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-py"
+  recursive_type_depth = 5
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+}
+
+model Movie {
+  id            Int     @id
+  title         String
+  year          Int
+  genre         String
+  poster        String
+  criticRating  Int
+  link          String
+  roles         Role[]
+  reviews       Review[]
+}
+
+model Review {
+  id            Int     @id
+  movieId       Int
+  Movie         Movie   @relation(fields: [movieId], references: [id])
+  reviewer      String
+  rating        Int?
+  link          String
+  text          String
+}
+
+model Actor {
+  id            Int     @id
+  name          String
+  link          String
+  roles         Role[]
+}
+
+model Role {
+  movieId       Int
+  actorId       Int
+  Movie         Movie   @relation(fields: [movieId], references: [id])
+  Actor         Actor   @relation(fields: [actorId], references: [id])
+
+  @@id([movieId, actorId])
+}
