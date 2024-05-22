@@ -2,6 +2,7 @@
 
 generator client {
   provider = "prisma-client-py"
+  interface = "sync"
   recursive_type_depth = 5
 }
 
@@ -12,39 +13,39 @@ datasource db {
 }
 
 model Movie {
-  id            Int     @id
-  title         String
+  id            String        @id // IMDB ID
+  title         String        @unique
   year          Int
   genre         String
   poster        String
-  criticRating  Int
-  link          String
-  roles         Role[]
+  criticRating  Float?
+  crewMembers   CrewMember[]
   reviews       Review[]
 }
 
 model Review {
-  id            Int     @id
-  movieId       Int
-  Movie         Movie   @relation(fields: [movieId], references: [id])
+  id            Int           @id
+  movieId       String
+  Movie         Movie         @relation(fields: [movieId], references: [id])
   reviewer      String
   rating        Int?
   link          String
   text          String
 }
 
-model Actor {
-  id            Int     @id
-  name          String
+model Worker {
+  id            Int           @id @default(autoincrement())
+  name          String        @unique
   link          String
-  roles         Role[]
+  roles         CrewMember[]
 }
 
-model Role {
-  movieId       Int
-  actorId       Int
-  Movie         Movie   @relation(fields: [movieId], references: [id])
-  Actor         Actor   @relation(fields: [actorId], references: [id])
+model CrewMember {
+  movieId       String
+  workerId      Int
+  Movie         Movie         @relation(fields: [movieId], references: [id])
+  Worker        Worker        @relation(fields: [workerId], references: [id])
+  role          String
 
-  @@id([movieId, actorId])
+  @@id([movieId, workerId])
 }

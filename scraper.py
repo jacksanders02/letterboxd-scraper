@@ -15,23 +15,24 @@ LetterboxdReview = TypedDict(
         'user': str,
         'rating': int,
         'link': str,
-        'text': List[str]
+        'text': str
     }
 )
 
 
-def parse_paragraphs(parent: BeautifulSoup) -> List[str]:
+def parse_paragraphs(parent: BeautifulSoup) -> str:
     """
     Helper class to retrieve paragraphs from a BeautifulSoup object.
     :param parent: the BeautifulSoup object to retrieve paragraphs from
-    :return: a list of paragraphs
+    :return: the text, with each paragraph separated by a newline.
     """
     paras = []
     for para in parent.find_all('p'):
         for br in para.find_all('br'):
             br.replace_with('\n')
         paras.extend(para.text.split('\n'))
-    return paras
+
+    return '\n'.join(paras)
 
 
 def parse_letterboxd(url: str, exclude_list: List[str]) -> List[LetterboxdReview]:
@@ -41,7 +42,7 @@ def parse_letterboxd(url: str, exclude_list: List[str]) -> List[LetterboxdReview
     :param exclude_list: a list of phrases which should be excluded from results
     :return: a list of letterboxd reviews as JSON objects
     """
-    all_reviews = []
+    reviews = []
 
     soup = BeautifulSoup(requests.get(url).text, 'html.parser')
     review_elems = soup.find('ul', class_='film-list').find_all('li')
@@ -51,7 +52,7 @@ def parse_letterboxd(url: str, exclude_list: List[str]) -> List[LetterboxdReview
         full_text = parse_paragraphs(BeautifulSoup(requests.get(text_url).text, 'html.parser'))
 
         # Used to check text for language/banned words etc.
-        check_text = ' '.join(full_text).lower()
+        check_text = full_text.lower()
 
         try:
             if (langdetect.detect(check_text) != 'en' or
@@ -76,7 +77,7 @@ def parse_letterboxd(url: str, exclude_list: List[str]) -> List[LetterboxdReview
 
         user = review.attrs['data-owner']
 
-        all_reviews.append({
+        reviews.append({
             'id': review_id,
             'movie': title_text,
             'user': user,
@@ -85,20 +86,22 @@ def parse_letterboxd(url: str, exclude_list: List[str]) -> List[LetterboxdReview
             'text': full_text
         })
 
-    return all_reviews
+    return reviews
 
 
-if __name__ == '__main__':
+def main() -> None:
     with open('banned_words.txt', 'r') as f:
         exclude_list = f.read().splitlines()
 
     langdetect.DetectorFactory.seed = 123
     reviews = []
 
-    for i in tqdm(range(256), desc="Fetching popular reviews: Page "):
+    for i in tqdm(range(1, 257), desc="Fetching popular reviews"):
         reviews.extend(parse_letterboxd(f'https://letterboxd.com/reviews/popular/page/{i}/', exclude_list))
 
-    print(len(reviews))
-
     with open('reviews.json', 'w') as f:
-        json.dump(reviews, f, indent=4)
+        json.dump(reviews, f, indent=4, ensure_ascii=False)
+
+
+if __name__ == '__main__':
+    main()

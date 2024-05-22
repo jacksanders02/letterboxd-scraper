@@ -60,6 +60,7 @@ def main() -> None:
     clean_reviews = []
     for review in reviews:
         if should_include(review, fonts):
+            review['text'] = review['text'].replace(' ', ' ')
             clean_reviews.append(review)
 
     print(f"Original reviews: {len(reviews)}\nCleaned reviews: {len(clean_reviews)}")
